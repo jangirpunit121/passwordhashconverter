@@ -2,7 +2,13 @@
 import streamlit as st
 import hashlib
 import secrets
-from django.contrib.auth.hashers import make_password, check_password
+import base64
+import hmac
+
+
+# ==========================================
+# PAGE CONFIGURATION
+# ==========================================
 
 st.set_page_config(
     page_title="Password Hash Converter",
@@ -11,26 +17,151 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# -------------------------------
-# CUSTOM DESIGN
-# -------------------------------
+
+# ==========================================
+# PASSWORD HASH FUNCTIONS
+# ==========================================
+
+def make_password(password):
+    """Generate Django-compatible PBKDF2 SHA256 hash."""
+
+    salt = secrets.token_urlsafe(12)
+    iterations = 600000
+
+    dk = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        iterations
+    )
+
+    encoded = base64.b64encode(dk).decode("ascii").strip()
+
+    return f"pbkdf2_sha256${iterations}${salt}${encoded}"
+
+
+def check_password(password, encoded):
+    """Verify Django-compatible PBKDF2 SHA256 hash."""
+
+    try:
+        algorithm, iterations, salt, stored_hash = encoded.split("$")
+
+        if algorithm != "pbkdf2_sha256":
+            return False
+
+        iterations = int(iterations)
+
+        if iterations <= 0 or iterations > 10000000:
+            return False
+
+        dk = hashlib.pbkdf2_hmac(
+            "sha256",
+            password.encode("utf-8"),
+            salt.encode("utf-8"),
+            iterations
+        )
+
+        calculated = base64.b64encode(dk).decode("ascii").strip()
+
+        return hmac.compare_digest(
+            calculated,
+            stored_hash
+        )
+
+    except (ValueError, TypeError, OverflowError):
+        return False
+
+
+def generate_hash(password, algorithm):
+
+    if algorithm == "MD5":
+        return hashlib.md5(
+            password.encode("utf-8")
+        ).hexdigest()
+
+    elif algorithm == "SHA-256":
+        return hashlib.sha256(
+            password.encode("utf-8")
+        ).hexdigest()
+
+    elif algorithm == "SHA-512":
+        return hashlib.sha512(
+            password.encode("utf-8")
+        ).hexdigest()
+
+    elif algorithm == "Django PBKDF2":
+        return make_password(password)
+
+    return None
+
+
+def verify_hash(password, hashed, algorithm):
+
+    hashed = hashed.strip()
+
+    if algorithm == "MD5":
+        calculated = hashlib.md5(
+            password.encode("utf-8")
+        ).hexdigest()
+
+        return hmac.compare_digest(
+            calculated,
+            hashed.lower()
+        )
+
+    elif algorithm == "SHA-256":
+        calculated = hashlib.sha256(
+            password.encode("utf-8")
+        ).hexdigest()
+
+        return hmac.compare_digest(
+            calculated,
+            hashed.lower()
+        )
+
+    elif algorithm == "SHA-512":
+        calculated = hashlib.sha512(
+            password.encode("utf-8")
+        ).hexdigest()
+
+        return hmac.compare_digest(
+            calculated,
+            hashed.lower()
+        )
+
+    elif algorithm == "Django PBKDF2":
+        return check_password(password, hashed)
+
+    return False
+
+
+# ==========================================
+# CUSTOM CSS
+# ==========================================
 
 st.markdown("""
 <style>
-#MainMenu, footer, header {
-    visibility: hidden;
+
+#MainMenu,
+footer,
+header,
+[data-testid="stToolbar"],
+[data-testid="stDecoration"] {
+    display: none !important;
 }
 
 [data-testid="stHeader"] {
-    height: 0px;
-}
-
-[data-testid="stToolbar"] {
-    display: none;
+    height: 0 !important;
+    background: transparent !important;
 }
 
 .stApp {
-    background: linear-gradient(135deg, #081225, #111c35);
+    background: linear-gradient(
+        135deg,
+        #081225,
+        #101e36,
+        #142847
+    );
     color: #ffffff;
 }
 
@@ -41,8 +172,12 @@ st.markdown("""
 }
 
 .hero {
-    background: linear-gradient(120deg, #172f59, #244d83);
-    padding: 35px;
+    background: linear-gradient(
+        120deg,
+        #172f59,
+        #244d83
+    );
+    padding: 38px 20px;
     border-radius: 20px;
     text-align: center;
     border: 1px solid #355b91;
@@ -51,14 +186,25 @@ st.markdown("""
 }
 
 .hero h1 {
-    color: white;
-    font-size: 36px;
-    margin-bottom: 8px;
+    color: #ffffff;
+    font-size: 35px;
+    font-weight: 800;
+    margin-bottom: 10px;
 }
 
 .hero p {
     color: #d4e4ff;
     font-size: 15px;
+    margin-bottom: 0;
+}
+
+.info-card {
+    background: #14243c;
+    padding: 20px;
+    border-radius: 14px;
+    border: 1px solid #304967;
+    margin: 12px 0 22px 0;
+    color: #dbeafe;
 }
 
 .stTabs [data-baseweb="tab-list"] {
@@ -102,28 +248,24 @@ st.markdown("""
 
 .stButton button,
 .stDownloadButton button {
-    background: linear-gradient(90deg, #2563eb, #3b82f6);
+    background: linear-gradient(
+        90deg,
+        #2563eb,
+        #3b82f6
+    );
     color: white;
     border: none;
     border-radius: 10px;
     font-weight: 600;
-    padding: 10px 22px;
+    padding: 11px 20px;
     transition: .2s;
 }
 
 .stButton button:hover,
 .stDownloadButton button:hover {
-    background: linear-gradient(90deg, #1d4ed8, #2563eb);
-    border: none;
+    background: #1d4ed8;
     color: white;
-}
-
-.info-card {
-    background: #14243c;
-    padding: 20px;
-    border-radius: 14px;
-    border: 1px solid #304967;
-    margin: 12px 0;
+    border: none;
 }
 
 .result-card {
@@ -132,12 +274,13 @@ st.markdown("""
     padding: 18px;
     border-radius: 12px;
     color: #d1fae5;
+    margin-top: 15px;
 }
 
 .footer {
     text-align: center;
     padding: 25px 10px;
-    margin-top: 35px;
+    margin-top: 40px;
     color: #9fb4d0;
     border-top: 1px solid #30415b;
 }
@@ -149,25 +292,31 @@ st.markdown("""
 [data-testid="stAlert"] {
     border-radius: 10px;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
 
-# -------------------------------
+# ==========================================
 # HEADER
-# -------------------------------
+# ==========================================
 
 st.markdown("""
 <div class="hero">
+
     <h1>🔐 Password Hash Converter</h1>
-    <p>Generate, verify and understand password hashes securely.</p>
+
+    <p>
+        Generate, verify and understand password hashes securely.
+    </p>
+
 </div>
 """, unsafe_allow_html=True)
 
 
-# -------------------------------
+# ==========================================
 # TABS
-# -------------------------------
+# ==========================================
 
 tab1, tab2, tab3 = st.tabs([
     "🔄 Normal → Hash",
@@ -176,9 +325,9 @@ tab1, tab2, tab3 = st.tabs([
 ])
 
 
-# -------------------------------
-# NORMAL TO HASH
-# -------------------------------
+# ==========================================
+# TAB 1: NORMAL TO HASH
+# ==========================================
 
 with tab1:
 
@@ -186,7 +335,8 @@ with tab1:
 
     st.markdown("""
     <div class="info-card">
-        Convert your normal password into a cryptographic hash.
+        Enter your normal password and select an algorithm
+        to generate its hash.
     </div>
     """, unsafe_allow_html=True)
 
@@ -204,65 +354,58 @@ with tab1:
             "SHA-512",
             "MD5",
             "Django PBKDF2"
-        ]
+        ],
+        key="generate_algorithm"
     )
 
-    if st.button("⚡ Generate Hash", type="primary"):
+    if st.button(
+        "⚡ Generate Hash",
+        type="primary",
+        use_container_width=True
+    ):
 
         if not password:
+
             st.warning("Please enter a password.")
 
         else:
 
-            if algorithm == "SHA-256":
-                hashed = hashlib.sha256(
-                    password.encode()
-                ).hexdigest()
+            with st.spinner("Generating hash..."):
 
-            elif algorithm == "SHA-512":
-                hashed = hashlib.sha512(
-                    password.encode()
-                ).hexdigest()
+                hashed = generate_hash(
+                    password,
+                    algorithm
+                )
 
-            elif algorithm == "MD5":
-                hashed = hashlib.md5(
-                    password.encode()
-                ).hexdigest()
+                st.session_state["generated_hash"] = hashed
 
-            else:
-                hashed = make_password(password)
+                st.session_state["generated_algorithm"] = algorithm
 
             st.success("Hash generated successfully!")
 
-            st.text_area(
-                "Generated Hash",
-                value=hashed,
-                height=110,
-                key="generated_hash"
-            )
+    if st.session_state.get("generated_hash"):
 
-            col1, col2 = st.columns(2)
+        st.markdown("#### Generated Hash")
 
-            with col1:
-                st.download_button(
-                    "⬇ Download Hash",
-                    data=hashed,
-                    file_name="password_hash.txt",
-                    mime="text/plain",
-                    use_container_width=True
-                )
+        st.text_area(
+            "Your Hash",
+            value=st.session_state["generated_hash"],
+            height=110,
+            key="hash_output"
+        )
 
-            with col2:
-                st.button(
-                    "✅ Hash Generated",
-                    disabled=True,
-                    use_container_width=True
-                )
+        st.download_button(
+            "⬇ Download Hash",
+            data=st.session_state["generated_hash"],
+            file_name="password_hash.txt",
+            mime="text/plain",
+            use_container_width=True
+        )
 
 
-# -------------------------------
-# HASH TO VERIFY
-# -------------------------------
+# ==========================================
+# TAB 2: HASH TO VERIFY
+# ==========================================
 
 with tab2:
 
@@ -270,15 +413,16 @@ with tab2:
 
     st.markdown("""
     <div class="info-card">
-        Enter an existing hash and its suspected original password
-        to check whether they match.
+        Paste an existing password hash and enter the password
+        you want to verify.
     </div>
     """, unsafe_allow_html=True)
 
     entered_hash = st.text_area(
         "Enter Existing Hash",
         placeholder="Paste your existing hash here...",
-        height=110
+        height=120,
+        key="existing_hash"
     )
 
     original_password = st.text_input(
@@ -299,63 +443,45 @@ with tab2:
         key="verify_algorithm"
     )
 
-    if st.button("🔍 Verify Password", type="primary"):
+    if st.button(
+        "🔍 Verify Password",
+        type="primary",
+        use_container_width=True
+    ):
 
         if not entered_hash.strip() or not original_password:
+
             st.warning("Please fill in both fields.")
 
         else:
 
-            try:
+            with st.spinner("Verifying password..."):
 
-                if verify_algorithm == "SHA-256":
-                    calculated = hashlib.sha256(
-                        original_password.encode()
-                    ).hexdigest()
+                result = verify_hash(
+                    original_password,
+                    entered_hash,
+                    verify_algorithm
+                )
 
-                    result = secrets.compare_digest(
-                        calculated,
-                        entered_hash.strip().lower()
-                    )
+            if result:
 
-                elif verify_algorithm == "SHA-512":
-                    calculated = hashlib.sha512(
-                        original_password.encode()
-                    ).hexdigest()
+                st.success("✅ Password Matched Successfully!")
 
-                    result = secrets.compare_digest(
-                        calculated,
-                        entered_hash.strip().lower()
-                    )
+                st.markdown("""
+                <div class="result-card">
+                    <h4>Verification Successful</h4>
+                    The entered password matches the provided hash.
+                </div>
+                """, unsafe_allow_html=True)
 
-                elif verify_algorithm == "MD5":
-                    calculated = hashlib.md5(
-                        original_password.encode()
-                    ).hexdigest()
+            else:
 
-                    result = secrets.compare_digest(
-                        calculated,
-                        entered_hash.strip().lower()
-                    )
-
-                else:
-                    result = check_password(
-                        original_password,
-                        entered_hash.strip()
-                    )
-
-                if result:
-                    st.success("✅ Password Matched Successfully!")
-                else:
-                    st.error("❌ Password Does Not Match!")
-
-            except Exception:
-                st.error("Invalid hash format or verification error.")
+                st.error("❌ Password Does Not Match!")
 
 
-# -------------------------------
-# HASH INFORMATION
-# -------------------------------
+# ==========================================
+# TAB 3: HASH INFORMATION
+# ==========================================
 
 with tab3:
 
@@ -370,16 +496,16 @@ with tab3:
     | Algorithm | Hash Size | Description |
     |---|---:|---|
     | MD5 | 128-bit | Legacy hash |
-    | SHA-256 | 256-bit | Secure general-purpose hash |
+    | SHA-256 | 256-bit | SHA-2 family |
     | SHA-512 | 512-bit | SHA-2 family |
     | Django PBKDF2 | Variable | Salted password hashing |
 
-    #### Security Recommendations
+    ### Security Recommendations
 
     - Use Django PBKDF2 or Argon2 for password storage.
     - Avoid MD5 for password security.
     - Never store plain-text passwords.
-    - Never share real production password hashes.
+    - Never share production password hashes.
     """)
 
     st.warning(
@@ -387,16 +513,23 @@ with tab3:
     )
 
 
-# -------------------------------
+# ==========================================
 # FOOTER
-# -------------------------------
+# ==========================================
 
 st.markdown("""
 <div class="footer">
+
     <div>🔐 Password Hash Converter</div>
-    <div>Designed & Built by <strong>Punit Jangir</strong></div>
+
+    <div style="margin-top:8px;">
+        Designed & Built by
+        <strong>Punit Jangir</strong>
+    </div>
+
     <div style="font-size:12px; margin-top:8px;">
         Secure Password Utilities | Streamlit
     </div>
+
 </div>
 """, unsafe_allow_html=True)
