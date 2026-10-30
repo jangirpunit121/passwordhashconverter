@@ -6,10 +6,6 @@ import base64
 import hmac
 
 
-# ==========================================
-# PAGE CONFIGURATION
-# ==========================================
-
 st.set_page_config(
     page_title="Password Hash Converter",
     page_icon="🔐",
@@ -18,13 +14,11 @@ st.set_page_config(
 )
 
 
-# ==========================================
-# PASSWORD HASH FUNCTIONS
-# ==========================================
+# =====================================
+# PASSWORD FUNCTIONS
+# =====================================
 
 def make_password(password):
-    """Generate Django-compatible PBKDF2 SHA256 hash."""
-
     salt = secrets.token_urlsafe(12)
     iterations = 600000
 
@@ -35,14 +29,12 @@ def make_password(password):
         iterations
     )
 
-    encoded = base64.b64encode(dk).decode("ascii").strip()
+    encoded = base64.b64encode(dk).decode("ascii")
 
     return f"pbkdf2_sha256${iterations}${salt}${encoded}"
 
 
 def check_password(password, encoded):
-    """Verify Django-compatible PBKDF2 SHA256 hash."""
-
     try:
         algorithm, iterations, salt, stored_hash = encoded.split("$")
 
@@ -61,12 +53,9 @@ def check_password(password, encoded):
             iterations
         )
 
-        calculated = base64.b64encode(dk).decode("ascii").strip()
+        calculated = base64.b64encode(dk).decode("ascii")
 
-        return hmac.compare_digest(
-            calculated,
-            stored_hash
-        )
+        return hmac.compare_digest(calculated, stored_hash)
 
     except (ValueError, TypeError, OverflowError):
         return False
@@ -75,24 +64,16 @@ def check_password(password, encoded):
 def generate_hash(password, algorithm):
 
     if algorithm == "MD5":
-        return hashlib.md5(
-            password.encode("utf-8")
-        ).hexdigest()
+        return hashlib.md5(password.encode()).hexdigest()
 
     elif algorithm == "SHA-256":
-        return hashlib.sha256(
-            password.encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha256(password.encode()).hexdigest()
 
     elif algorithm == "SHA-512":
-        return hashlib.sha512(
-            password.encode("utf-8")
-        ).hexdigest()
+        return hashlib.sha512(password.encode()).hexdigest()
 
     elif algorithm == "Django PBKDF2":
         return make_password(password)
-
-    return None
 
 
 def verify_hash(password, hashed, algorithm):
@@ -100,34 +81,19 @@ def verify_hash(password, hashed, algorithm):
     hashed = hashed.strip()
 
     if algorithm == "MD5":
-        calculated = hashlib.md5(
-            password.encode("utf-8")
-        ).hexdigest()
+        calculated = hashlib.md5(password.encode()).hexdigest()
 
-        return hmac.compare_digest(
-            calculated,
-            hashed.lower()
-        )
+        return hmac.compare_digest(calculated, hashed.lower())
 
     elif algorithm == "SHA-256":
-        calculated = hashlib.sha256(
-            password.encode("utf-8")
-        ).hexdigest()
+        calculated = hashlib.sha256(password.encode()).hexdigest()
 
-        return hmac.compare_digest(
-            calculated,
-            hashed.lower()
-        )
+        return hmac.compare_digest(calculated, hashed.lower())
 
     elif algorithm == "SHA-512":
-        calculated = hashlib.sha512(
-            password.encode("utf-8")
-        ).hexdigest()
+        calculated = hashlib.sha512(password.encode()).hexdigest()
 
-        return hmac.compare_digest(
-            calculated,
-            hashed.lower()
-        )
+        return hmac.compare_digest(calculated, hashed.lower())
 
     elif algorithm == "Django PBKDF2":
         return check_password(password, hashed)
@@ -135,188 +101,305 @@ def verify_hash(password, hashed, algorithm):
     return False
 
 
-# ==========================================
+# =====================================
 # CUSTOM CSS
-# ==========================================
+# =====================================
 
 st.markdown("""
 <style>
 
+/* Main background */
+
+.stApp {
+    background: #0b1426 !important;
+    color: #ffffff !important;
+}
+
+[data-testid="stAppViewContainer"] {
+    background: #0b1426 !important;
+}
+
+[data-testid="stMain"] {
+    background: transparent !important;
+}
+
+.block-container {
+    max-width: 1100px;
+    padding: 2rem 2rem 1rem 2rem;
+}
+
+/* Hide unnecessary top controls */
+
 #MainMenu,
 footer,
-header,
 [data-testid="stToolbar"],
 [data-testid="stDecoration"] {
     display: none !important;
 }
 
 [data-testid="stHeader"] {
-    height: 0 !important;
     background: transparent !important;
 }
 
-.stApp {
-    background: linear-gradient(
-        135deg,
-        #081225,
-        #101e36,
-        #142847
-    );
-    color: #ffffff;
+/* All normal text */
+
+.stApp p,
+.stApp label,
+.stApp span,
+.stApp li,
+.stApp h1,
+.stApp h2,
+.stApp h3,
+.stApp h4,
+.stApp small {
+    color: #f1f5f9;
 }
 
-.block-container {
-    max-width: 1050px;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-}
+/* Hero header */
 
-.hero {
-    background: linear-gradient(
-        120deg,
-        #172f59,
-        #244d83
-    );
-    padding: 38px 20px;
-    border-radius: 20px;
+.hero-container {
+    background: linear-gradient(135deg, #172f59, #2563a6);
+    border: 1px solid #365d91;
+    border-radius: 18px;
+    padding: 32px 20px;
     text-align: center;
-    border: 1px solid #355b91;
     margin-bottom: 28px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
 }
 
-.hero h1 {
-    color: #ffffff;
-    font-size: 35px;
+.hero-title {
+    font-size: 32px;
     font-weight: 800;
-    margin-bottom: 10px;
+    color: #ffffff;
+    margin: 0;
 }
 
-.hero p {
-    color: #d4e4ff;
-    font-size: 15px;
-    margin-bottom: 0;
-}
-
-.info-card {
-    background: #14243c;
-    padding: 20px;
-    border-radius: 14px;
-    border: 1px solid #304967;
-    margin: 12px 0 22px 0;
+.hero-subtitle {
     color: #dbeafe;
+    font-size: 15px;
+    margin-top: 10px;
 }
+
+/* Tabs */
 
 .stTabs [data-baseweb="tab-list"] {
-    gap: 10px;
-    background: #14233e;
-    padding: 10px;
+    background: #14233b;
+    border: 1px solid #263c5b;
     border-radius: 12px;
+    padding: 8px;
+    gap: 8px;
 }
 
 .stTabs [data-baseweb="tab"] {
-    color: #dbeafe;
-    border-radius: 9px;
-    padding: 12px 20px;
+    background: transparent;
+    border-radius: 8px;
+    padding: 12px 18px;
+    color: #ffffff !important;
 }
 
-.stTabs [aria-selected="true"] {
-    background: #2563eb;
-    color: white;
+.stTabs [data-baseweb="tab"] p,
+.stTabs [data-baseweb="tab"] span {
+    color: #ffffff !important;
 }
+
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    background: #2563eb !important;
+    border-radius: 8px;
+}
+
+.stTabs [data-baseweb="tab-highlight"] {
+    background: #60a5fa;
+}
+
+.stTabs [data-baseweb="tab-panel"] {
+    padding-top: 28px;
+}
+
+/* Input labels */
 
 .stTextInput label,
 .stTextArea label,
 .stSelectbox label {
-    color: #e2e8f0 !important;
+    color: #f8fafc !important;
     font-weight: 600;
 }
+
+/* Input fields */
 
 .stTextInput input,
 .stTextArea textarea {
     background: #172943 !important;
-    color: white !important;
-    border: 1px solid #385273 !important;
-    border-radius: 10px !important;
+    color: #ffffff !important;
+    border: 1px solid #3b5577 !important;
+    border-radius: 9px !important;
+    caret-color: white !important;
 }
 
-.stSelectbox [data-baseweb="select"] > div {
-    background: #172943;
-    color: white;
-    border-radius: 10px;
+.stTextInput input::placeholder,
+.stTextArea textarea::placeholder {
+    color: #a9bad0 !important;
 }
+
+/* Select box */
+
+.stSelectbox [data-baseweb="select"] > div {
+    background: #172943 !important;
+    color: #ffffff !important;
+    border: 1px solid #3b5577 !important;
+    border-radius: 9px !important;
+}
+
+.stSelectbox [data-baseweb="select"] * {
+    color: #ffffff !important;
+}
+
+/* Dropdown menu */
+
+[data-baseweb="popover"],
+[data-baseweb="menu"],
+[data-baseweb="select"] ul {
+    background: #172943 !important;
+}
+
+[data-baseweb="menu"] li {
+    color: white !important;
+}
+
+/* Buttons */
 
 .stButton button,
 .stDownloadButton button {
-    background: linear-gradient(
-        90deg,
-        #2563eb,
-        #3b82f6
-    );
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    padding: 11px 20px;
-    transition: .2s;
+    background: linear-gradient(90deg, #2563eb, #3b82f6) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 9px !important;
+    font-weight: 600 !important;
+    min-height: 43px;
+    transition: 0.2s;
 }
 
 .stButton button:hover,
 .stDownloadButton button:hover {
-    background: #1d4ed8;
-    color: white;
-    border: none;
+    background: #1d4ed8 !important;
+    color: white !important;
+    border: none !important;
+    transform: translateY(-1px);
 }
 
+.stButton button:disabled {
+    background: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+/* Information cards */
+
+.info-card {
+    background: #14243c;
+    border: 1px solid #304967;
+    border-radius: 12px;
+    padding: 17px 20px;
+    margin: 12px 0 24px 0;
+    color: #e2e8f0 !important;
+    line-height: 1.7;
+}
+
+/* Result card */
+
 .result-card {
-    background: #102f2b;
+    background: #10352f;
     border: 1px solid #16866a;
     padding: 18px;
     border-radius: 12px;
-    color: #d1fae5;
-    margin-top: 15px;
+    color: #ecfdf5 !important;
+    margin: 15px 0;
 }
 
-.footer {
-    text-align: center;
-    padding: 25px 10px;
-    margin-top: 40px;
-    color: #9fb4d0;
-    border-top: 1px solid #30415b;
-}
-
-.footer strong {
-    color: #60a5fa;
-}
+/* Alerts */
 
 [data-testid="stAlert"] {
     border-radius: 10px;
+}
+
+/* Code block */
+
+.stCode,
+[data-testid="stCode"] {
+    background: #172943 !important;
+    border-radius: 10px;
+}
+
+/* Download area */
+
+[data-testid="stDownloadButton"] button {
+    width: 100%;
+}
+
+/* Dividers */
+
+hr {
+    border-color: #30415b !important;
+}
+
+/* Footer */
+
+.footer {
+    text-align: center;
+    border-top: 1px solid #30415b;
+    margin-top: 40px;
+    padding: 25px 10px;
+    color: #cbd5e1;
+    line-height: 2;
+}
+
+.footer-name {
+    color: #60a5fa;
+    font-weight: 700;
+}
+
+/* Mobile responsive */
+
+@media (max-width: 640px) {
+
+    .block-container {
+        padding: 1rem 1rem;
+    }
+
+    .hero-container {
+        padding: 25px 12px;
+    }
+
+    .hero-title {
+        font-size: 23px;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        padding: 9px 7px;
+        font-size: 12px;
+    }
+
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 
-# ==========================================
+# =====================================
 # HEADER
-# ==========================================
+# =====================================
 
 st.markdown("""
-<div class="hero">
-
-    <h1>🔐 Password Hash Converter</h1>
-
-    <p>
+<div class="hero-container">
+    <div class="hero-title">🔐 Password Hash Converter</div>
+    <div class="hero-subtitle">
         Generate, verify and understand password hashes securely.
-    </p>
-
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
 
-# ==========================================
+# =====================================
 # TABS
-# ==========================================
+# =====================================
 
 tab1, tab2, tab3 = st.tabs([
     "🔄 Normal → Hash",
@@ -325,36 +408,31 @@ tab1, tab2, tab3 = st.tabs([
 ])
 
 
-# ==========================================
-# TAB 1: NORMAL TO HASH
-# ==========================================
+# =====================================
+# TAB 1 - NORMAL TO HASH
+# =====================================
 
 with tab1:
 
-    st.markdown("### Generate Password Hash")
+    st.subheader("Generate Password Hash")
 
     st.markdown("""
     <div class="info-card">
-        Enter your normal password and select an algorithm
-        to generate its hash.
+        Convert your normal password into a cryptographic hash.
+        Select your preferred algorithm and generate the result.
     </div>
     """, unsafe_allow_html=True)
 
     password = st.text_input(
         "Enter Normal Password",
         type="password",
-        key="normal_password",
-        placeholder="Enter your password..."
+        placeholder="Enter your password...",
+        key="normal_password"
     )
 
     algorithm = st.selectbox(
         "Select Hash Algorithm",
-        [
-            "SHA-256",
-            "SHA-512",
-            "MD5",
-            "Django PBKDF2"
-        ],
+        ["SHA-256", "SHA-512", "MD5", "Django PBKDF2"],
         key="generate_algorithm"
     )
 
@@ -365,21 +443,13 @@ with tab1:
     ):
 
         if not password:
-
             st.warning("Please enter a password.")
 
         else:
 
-            with st.spinner("Generating hash..."):
+            hashed = generate_hash(password, algorithm)
 
-                hashed = generate_hash(
-                    password,
-                    algorithm
-                )
-
-                st.session_state["generated_hash"] = hashed
-
-                st.session_state["generated_algorithm"] = algorithm
+            st.session_state["generated_hash"] = hashed
 
             st.success("Hash generated successfully!")
 
@@ -403,43 +473,38 @@ with tab1:
         )
 
 
-# ==========================================
-# TAB 2: HASH TO VERIFY
-# ==========================================
+# =====================================
+# TAB 2 - HASH TO VERIFY
+# =====================================
 
 with tab2:
 
-    st.markdown("### Verify Existing Password Hash")
+    st.subheader("Verify Existing Password Hash")
 
     st.markdown("""
     <div class="info-card">
-        Paste an existing password hash and enter the password
-        you want to verify.
+        Enter an existing hash and the suspected original password
+        to check whether they match.
     </div>
     """, unsafe_allow_html=True)
 
     entered_hash = st.text_area(
         "Enter Existing Hash",
         placeholder="Paste your existing hash here...",
-        height=120,
+        height=110,
         key="existing_hash"
     )
 
     original_password = st.text_input(
         "Enter Password to Verify",
         type="password",
-        key="verify_password",
-        placeholder="Enter password..."
+        placeholder="Enter password...",
+        key="verify_password"
     )
 
     verify_algorithm = st.selectbox(
         "Select Hash Algorithm",
-        [
-            "SHA-256",
-            "SHA-512",
-            "MD5",
-            "Django PBKDF2"
-        ],
+        ["SHA-256", "SHA-512", "MD5", "Django PBKDF2"],
         key="verify_algorithm"
     )
 
@@ -455,13 +520,11 @@ with tab2:
 
         else:
 
-            with st.spinner("Verifying password..."):
-
-                result = verify_hash(
-                    original_password,
-                    entered_hash,
-                    verify_algorithm
-                )
+            result = verify_hash(
+                original_password,
+                entered_hash,
+                verify_algorithm
+            )
 
             if result:
 
@@ -469,7 +532,7 @@ with tab2:
 
                 st.markdown("""
                 <div class="result-card">
-                    <h4>Verification Successful</h4>
+                    <b>Verification Successful</b><br>
                     The entered password matches the provided hash.
                 </div>
                 """, unsafe_allow_html=True)
@@ -479,29 +542,33 @@ with tab2:
                 st.error("❌ Password Does Not Match!")
 
 
-# ==========================================
-# TAB 3: HASH INFORMATION
-# ==========================================
+# =====================================
+# TAB 3 - HASH INFORMATION
+# =====================================
 
 with tab3:
 
-    st.markdown("### Understanding Password Hashes")
+    st.subheader("Understanding Password Hashes")
 
-    st.info(
-        "Cryptographic password hashes are one-way functions. "
-        "They cannot normally be converted back into their original passwords."
-    )
+    st.markdown("""
+    <div class="info-card">
+        A cryptographic hash is a one-way mathematical function.
+        It cannot normally be converted back into its original password.
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("""
     | Algorithm | Hash Size | Description |
-    |---|---:|---|
+    |:---|:---:|:---|
     | MD5 | 128-bit | Legacy hash |
     | SHA-256 | 256-bit | SHA-2 family |
     | SHA-512 | 512-bit | SHA-2 family |
     | Django PBKDF2 | Variable | Salted password hashing |
+    """)
 
-    ### Security Recommendations
+    st.markdown("### Security Recommendations")
 
+    st.markdown("""
     - Use Django PBKDF2 or Argon2 for password storage.
     - Avoid MD5 for password security.
     - Never store plain-text passwords.
@@ -513,23 +580,19 @@ with tab3:
     )
 
 
-# ==========================================
+# =====================================
 # FOOTER
-# ==========================================
+# =====================================
 
 st.markdown("""
 <div class="footer">
-
     <div>🔐 Password Hash Converter</div>
-
-    <div style="margin-top:8px;">
+    <div>
         Designed & Built by
-        <strong>Punit Jangir</strong>
+        <span class="footer-name">Punit Jangir</span>
     </div>
-
-    <div style="font-size:12px; margin-top:8px;">
+    <div style="font-size:12px;">
         Secure Password Utilities | Streamlit
     </div>
-
 </div>
 """, unsafe_allow_html=True)
