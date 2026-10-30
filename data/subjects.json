@@ -1,0 +1,64 @@
+[
+  {
+    "id": "SUB01",
+    "code": "CS101",
+    "name": "Programming Fundamentals",
+    "course_id": "C01",
+    "semester": 1,
+    "credits": 4,
+    "teacher_id": "T0001",
+    "type": "Theory"
+  },
+  {
+    "id": "SUB02",
+    "code": "CS102",
+    "name": "Data Structures",
+    "course_id": "C01",
+    "semester": 1,
+    "credits": 4,
+    "teacher_id": "T0002",
+    "type": "Theory"
+  },
+  {
+    "id": "SUB03",
+    "code": "CS103",
+    "name": "Digital Logic Design",
+    "course_id": "C01",
+    "semester": 1,
+    "credits": 3,
+    "teacher_id": "T0001",
+    "type": "Theory"
+  },
+  {
+    "id": "SUB7A76D9",
+    "code": "121",
+    "name": "Mathematics",
+    "course_id": "C01",
+    "semester": 1,
+    "max_marks": 100
+  },
+  {
+    "id": "SUBFBFD91",
+    "code": "121",
+    "name": "Mathematics",
+    "course_id": "C01",
+    "semester": 1,
+    "max_marks": 100
+  },
+  {
+    "id": "SUBB4F139",
+    "code": "BCA-101",
+    "name": "Internet & web design",
+    "course_id": "C3138D6",
+    "semester": 1,
+    "max_marks": 100
+  },
+  {
+    "id": "SUB57D66C",
+    "code": "BCA-102",
+    "name": "c programming",
+    "course_id": "C3138D6",
+    "semester": 1,
+    "max_marks": 100
+  }
+]

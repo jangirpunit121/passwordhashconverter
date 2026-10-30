@@ -1,0 +1,42 @@
+[
+  {
+    "id": "C01",
+    "name": "B.Tech Computer Science",
+    "code": "BT-CSE",
+    "duration_years": 4,
+    "seats": 120,
+    "dept": "CSE"
+  },
+  {
+    "id": "C02",
+    "name": "B.Tech Electronics",
+    "code": "BT-ECE",
+    "duration_years": 4,
+    "seats": 60,
+    "dept": "ECE"
+  },
+  {
+    "id": "C03",
+    "name": "B.Tech Mechanical",
+    "code": "BT-ME",
+    "duration_years": 4,
+    "seats": 60,
+    "dept": "ME"
+  },
+  {
+    "id": "C04",
+    "name": "B.Sc Physics",
+    "code": "BSC-PHY",
+    "duration_years": 3,
+    "seats": 40,
+    "dept": "Science"
+  },
+  {
+    "id": "C3138D6",
+    "name": "BCA",
+    "code": "101",
+    "duration": 3,
+    "seats": 60,
+    "base_fee": 50000
+  }
+]
